@@ -29,55 +29,39 @@ proc showBytes(x: string): string =
   result = "[" & x & "]"
 
 proc checkit(v: int) =
-  var res = encode(v)
+  var res: string = BInteger(data: v).encode()
   var numPadded: string = align($v, padLength)
-  var check: int
-  discard decodeInteger(res, 0, check)
-  echo(numPadded & " -> " & showBytes(res) & " -> " & $check)
+  var temp: BInteger = BInteger()
+  discard temp.decode(res, 0)
+  echo(numPadded & " -> " & showBytes(res) & " -> " & $temp.data)
 
 proc checkit(v: bool) =
-  var res = encode(v)
+  var res: string = BBoolean(data: v).encode()
   var numPadded: string = align($v, padLength)
-  var check: bool
-  discard decodeBoolean(res, 0, check)
-  echo(numPadded & " -> " & showBytes(res) & " -> " & $check)
+  var temp: BBoolean = BBoolean()
+  discard temp.decode(res, 0)
+  echo(numPadded & " -> " & showBytes(res) & " -> " & $temp.data)
 
 proc checkit(v: string) =
+  var res: string = BString(data: v).encode()
+  var numPadded: string = align($v, padLength)
+  var temp: BString = BString()
+  discard temp.decode(res, 0)
+  echo(numPadded & " -> " & showBytes(res) & " -> " & $temp.data)
+
+proc checkit(v: BList) =
+  var res = encode(v)
+  var numPadded: string = align($v.data, padLength)
+  var check: BList = newBList()
+  discard check.decode(res, 0)
+  echo(numPadded & " -> " & showBytes(res) & " -> " & $check.data)
+
+proc checkit(v: BDict) =
   var res = encode(v)
   var numPadded: string = align($v, padLength)
-  var check: string = ""
-  discard decodeString(res, 0, check)
-  echo(numPadded & " -> " & showBytes(res) & " -> " & $check)
-
-proc checkit(v: seq[string]) =
-  var res = encode(v)
-  var numPadded: string = align($v, padLength)
-  var check: seq[string] = @[]
-  discard decodeStringList(res, 0, check)
-  echo(numPadded & " -> " & showBytes(res) & " -> " & $check)
-
-proc checkit(v: seq[int]) =
-  var res = encode(v)
-  var numPadded: string = align($v, padLength)
-  var check: seq[int] = @[]
-  discard decodeIntegerList(res, 0, check)
-  echo(numPadded & " -> " & showBytes(res) & " -> " & $check)
-
-proc checkit(v: OrderedTable[string, string]) =
-  var res = encode(v)
-  var numPadded: string = align($v, padLength)
-  var check = initOrderedTable[string, string]()
-  discard decodeStringDict(res, 0, check)
-  echo(numPadded & " -> " & showBytes(res) & " -> " & $check)
-
-
-proc checkit(v: OrderedTable[string, int]) =
-  var res = encode(v)
-  var numPadded: string = align($v, padLength)
-  var check = initOrderedTable[string, int]()
-  discard decodeIntegerDict(res, 0, check)
-  echo(numPadded & " -> " & showBytes(res) & " -> " & $check)
-
+  var check = newBDict()
+  discard check.decode(res, 0)
+  echo(numPadded & " -> " & showBytes(res) & " -> " & $check.data)
 
 
 echo("Checking integers...")
@@ -97,33 +81,19 @@ checkit("This is a longer string")
 checkit("")
 echo ""
 
-echo("Checking string lists...")
-checkit( @["one", "two", "three"] )
-var a: seq[string] = @[]
-checkit(a)
-echo ""
-
-echo("Checking integer lists...")
-checkit( @[1,2,3] )
-checkit( @[-1,12345,0] )
-var b: seq[int] = @[]
-checkit(b)
+echo("Checking mixed lists...")
+var blist: BList = newBList()
+blist.add(BBoolean(data: true))
+blist.add(BString(data: "Hello"))
+blist.add(BInteger(data: 42))
+checkit(blist)
+checkit(newBList())
 echo ""
 
 echo("Checking string dictionary (order may change)...")
-var dict = initOrderedTable[string, string]()
-dict["spam"] = "eggs"
-dict["cow"] = "moo"
+var dict = newBDict()
+dict.add("spam", BString(data: "eggs"))
+dict.add("fortytwo", BInteger(data: 42))
+dict.add("itstrue", BBoolean(data: true))
+echo dict
 checkit(dict)
-var dict2 = initOrderedTable[string, string]()
-checkit(dict2)
-echo ""
-
-echo("Checking integer dictionary (order may change)...")
-var dict3 = initOrderedTable[string, int]()
-dict3["spam"] = 1
-dict3["cow"] = 42
-checkit(dict3)
-var dict4 = initOrderedTable[string, int]()
-checkit(dict4)
-echo ""
